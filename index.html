@@ -3,265 +3,713 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Zero</title>
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#17251d;color:#edf3df;font:14px system-ui,sans-serif}
-header{padding:16px;background:#23392b;border-bottom:2px solid #58744b}
-h1{margin:0;font-size:26px;color:#c8e6a0}
-header p{margin:5px 0 0;color:#c4d2bd}
-main{max-width:1000px;margin:auto;padding:12px}
-.panel{background:#25372b;border:1px solid #52674d;border-radius:10px;padding:12px;margin-bottom:12px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stat{background:#17271e;padding:10px;border-radius:7px}
-.stat strong{display:block;font-size:19px;color:#d2e9a8}
-button{background:#c5df99;color:#1d2d20;border:0;border-radius:7px;padding:11px 14px;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.5}
-.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-canvas{display:block;width:100%;height:auto;border-radius:8px;border:2px solid #6a8055;image-rendering:pixelated;background:#54864b}
-small,.muted{color:#bdcdb8}
-#log{height:145px;overflow:auto;line-height:1.6}
-.logline{border-bottom:1px solid #405441;padding:3px 0}
-.person{display:inline-block;background:#17271e;border-radius:5px;padding:5px;margin:3px;font-size:12px}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  background: #101713;
+  color: #e5eee5;
+  font-family: monospace;
+}
+
+h1 {
+  margin: 0 0 5px;
+  color: #a5e887;
+  font-size: 28px;
+}
+
+.subtitle {
+  color: #9aab9b;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.panel {
+  background: #1a241e;
+  border: 1px solid #344639;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  border: 2px solid #405641;
+  border-radius: 4px;
+  background: #315b35;
+}
+
+button {
+  background: #395e3c;
+  color: white;
+  border: 1px solid #6d946d;
+  padding: 10px 14px;
+  margin: 4px 4px 4px 0;
+  border-radius: 5px;
+  font-family: monospace;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #4c784e;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  background: #101713;
+  border: 1px solid #344639;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #9aab9b;
+  margin-bottom: 7px;
+}
+
+.stat-value {
+  font-size: 21px;
+  color: #b6ed9d;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+h2 {
+  color: #b6ed9d;
+  font-size: 16px;
+  margin-top: 0;
+}
+
+#log {
+  height: 180px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.log-entry {
+  border-bottom: 1px solid #29372d;
+  padding: 4px 0;
+  color: #c1d0c2;
+}
+
+#villagers {
+  max-height: 250px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+
+.villager {
+  padding: 7px;
+  margin-bottom: 5px;
+  background: #101713;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.villager:hover {
+  background: #293b2d;
+}
+
+.muted {
+  color: #9aab9b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#selectedInfo {
+  line-height: 1.7;
+  font-size: 12px;
+}
+
+.status {
+  color: #b6ed9d;
+  font-weight: bold;
+}
+
+footer {
+  text-align: center;
+  color: #748777;
+  font-size: 11px;
+  padding: 10px;
+}
 </style>
 </head>
+
 <body>
-<header>
-<h1>🌿 WORLD ZERO</h1>
-<p>A civilization begins with nothing.</p>
-</header>
-<main>
-<section class="panel">
-<b>WORLD STATUS</b>
-<div class="stats">
-<div class="stat">Day<strong id="day">1</strong></div>
-<div class="stat">Population<strong id="pop">50</strong></div>
-<div class="stat">Time<strong id="time">06:00</strong></div>
-<div class="stat">Food collected<strong id="food">0</strong></div>
-<div class="stat">Wood collected<strong id="wood">0</strong></div>
-<div class="stat">Tools<strong id="tools">0</strong></div>
+<div class="container">
+
+  <h1>WORLD ZERO</h1>
+  <p class="subtitle">
+    Fifty people. An untouched wilderness. No civilization.
+    What will humanity become?
+  </p>
+
+  <div class="panel">
+    <canvas id="world" width="900" height="430"></canvas>
+    <p class="muted">
+      Green = forest · Blue = river · Villagers move independently.
+      Select a villager below to inspect them.
+    </p>
+    <button id="startBtn" onclick="toggleSimulation()">▶ Start</button>
+    <button onclick="changeSpeed()">Speed: <span id="speedLabel">1x</span></button>
+    <button onclick="newWorld()">↻ New world</button>
+    <span id="status" class="status">Simulation stopped</span>
+  </div>
+
+  <div class="panel">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">POPULATION</div>
+        <div class="stat-value" id="population">50</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">DAY</div>
+        <div class="stat-value" id="day">1</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">TIME</div>
+        <div class="stat-value" id="time">06:00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">FOOD</div>
+        <div class="stat-value" id="food">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">TOOLS</div>
+        <div class="stat-value" id="tools">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">KNOWLEDGE</div>
+        <div class="stat-value" id="knowledge">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="columns">
+    <div class="panel">
+      <h2>Selected villager</h2>
+      <div id="selectedInfo" class="muted">
+        Select a villager from the population list.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>World events</h2>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Population</h2>
+    <p class="muted">
+      Each villager has individual needs and knowledge. Their survival
+      depends on finding water, gathering food and resting.
+    </p>
+    <div id="villagers"></div>
+  </div>
+
+  <footer>WORLD ZERO · The beginning of civilization</footer>
 </div>
-<div class="controls">
-<button id="start">▶ Start simulation</button>
-<button id="pause" disabled>Ⅱ Pause</button>
-<button id="speed">Speed: 1×</button>
-<button id="reset">↻ New world</button>
-</div>
-<small>No houses. No tools. No laws. No assigned jobs. The people must discover how to survive.</small>
-</section>
-<section class="panel">
-<b>THE WILDERNESS</b>
-<p class="muted">Green forest, wild berries and a river. Each colored figure is one person.</p>
-<canvas id="world" width="720" height="430"></canvas>
-<p class="muted">🟡 Exploring · 🟠 Gathering · 🔵 Drinking · 🟢 Resting · 🟣 Socializing</p>
-</section>
-<section class="panel">
-<b>WORLD CHRONICLE</b>
-<div id="log" aria-live="polite"></div>
-</section>
-<section class="panel">
-<b>PEOPLE</b>
-<p class="muted">Select a villager to inspect their needs and current behavior.</p>
-<div id="people"></div>
-<div id="personInfo" class="muted">No person selected.</div>
-</section>
-</main>
+
 <script>
-(()=>{
-const canvas=document.getElementById('world');
-const ctx=canvas.getContext('2d');
-const $=id=>document.getElementById(id);
-let people=[],running=false,day=1,hour=6,food=0,wood=0,tools=0,speed=1,tick=0,selected=-1,timer=null;
-const names=['Ada','Bela','Cora','Dara','Eva','Fia','Gala','Hana','Iris','Jana','Kira','Lia','Mara','Nina','Ona','Pia','Rosa','Sara','Tina','Vera','Willa','Yara','Zara','Mina','Luma','Ari','Bento','Caio','Davi','Enzo','Felix','Gael','Hugo','Ivo','Joao','Kai','Leo','Milo','Nico','Otto','Ravi','Theo','Uri','Vitor','Will','Xavi','Yuri','Zeca','Noah','Alan'];
-const rand=n=>Math.floor(Math.random()*n);
-const choose=a=>a[rand(a.length)];
-function makePeople(){
- people=[];
- for(let i=0;i<50;i++){
-  people.push({id:i,name:names[i],sex:i<25?'Woman':'Man',
-   x:45+rand(620),y:35+rand(355),hunger:10+rand(15),
-   thirst:10+rand(15),fatigue:rand(15),age:18+rand(30),
-   berries:0,branches:0,knowledge:0,friends:0,
-   action:'Exploring',goal:null,thought:'I must learn how to live here.',
-   alive:true});
- }
+const canvas = document.getElementById("world");
+const ctx = canvas.getContext("2d");
+
+const W = canvas.width;
+const H = canvas.height;
+
+let people = [];
+let running = false;
+let timer = null;
+let speed = 1;
+let tick = 0;
+let day = 1;
+let hour = 6;
+let food = 0;
+let tools = 0;
+let selectedId = null;
+let worldEvents = [];
+
+const names = [
+  "Ada", "Arin", "Bea", "Bram", "Cleo", "Dara", "Eli", "Enzo",
+  "Faye", "Finn", "Gia", "Hugo", "Iris", "Ivan", "June", "Kai",
+  "Lena", "Leo", "Mara", "Milo", "Nia", "Noah", "Opal", "Oren",
+  "Pia", "Ravi", "Rhea", "Rin", "Sage", "Sami", "Tala", "Theo",
+  "Uma", "Vera", "Wren", "Yara", "Zane", "Alma", "Ciro", "Davi",
+  "Ema", "Flora", "Gael", "Helena", "Isa", "Juno", "Luca", "Mina",
+  "Nico", "Sol"
+];
+
+const actions = [
+  "Exploring", "Gathering", "Drinking", "Resting", "Observing"
+];
+
+function rand(min, max) {
+  return Math.random() * (max - min) + min;
 }
-function log(s){
- const el=document.createElement('div');
- el.className='logline';el.textContent='Day '+day+' · '+String(hour).padStart(2,'0')+':00 — '+s;
- $('log').prepend(el);
- while($('log').children.length>60)$('log').lastChild.remove();
+
+function waterX(y) {
+  return 365 + Math.sin(y / 65) * 65;
 }
-function waterX(y){return 365+Math.sin(y/65)*65}
-function draw(){
- ctx.clearRect(0,0,720,430);
- ctx.fillStyle='#57864b';ctx.fillRect(0,0,720,430);
- // Pixel-art grass
- for(let y=0;y<430;y+=16)for(let x=0;x<720;x+=16){
-  if((x*7+y*3)%5===0){ctx.fillStyle='#639453';ctx.fillRect(x,y,7,5)}
-  if((x+y)%7===0){ctx.fillStyle='#487b42';ctx.fillRect(x+8,y+9,4,4)}
- }
- // River and banks
- ctx.fillStyle='#b5b879';
- ctx.beginPath();
- for(let y=0;y<=430;y+=5){let x=waterX(y);if(y===0)ctx.moveTo(x-25,y);else ctx.lineTo(x-25,y)}
- for(let y=430;y>=0;y-=5)ctx.lineTo(waterX(y)+25,y);
- ctx.closePath();ctx.fill();
- ctx.fillStyle='#398cbd';
- ctx.beginPath();
- for(let y=0;y<=430;y+=5){let x=waterX(y);if(y===0)ctx.moveTo(x-20,y);else ctx.lineTo(x-20,y)}
- for(let y=430;y>=0;y-=5)ctx.lineTo(waterX(y)+20,y);
- ctx.closePath();ctx.fill();
- for(let i=0;i<18;i++){
-  let y=(i*29+tick*2)%430,x=waterX(y);
-  ctx.fillStyle='#86cce0';ctx.fillRect(x-10,y,12,2);
- }
- // Trees
- for(let y=15;y<430;y+=35)for(let x=12;x<710;x+=37){
-  if(Math.abs(x-waterX(y))<40)continue;
-  if((x*3+y*7)%4===0)continue;
-  ctx.fillStyle='#67452c';ctx.fillRect(x+7,y+11,6,12);
-  ctx.fillStyle='#285d36';ctx.fillRect(x,y+3,20,13);
-  ctx.fillStyle='#347346';ctx.fillRect(x+3,y-3,14,13);
-  ctx.fillStyle='#4a8950';ctx.fillRect(x+5,y,5,4);
- }
- // Wild berries: natural food, not cultivated
- for(let i=0;i<28;i++){
-  let x=25+(i*83)%660,y=20+(i*53)%390;
-  if(Math.abs(x-waterX(y))<45)continue;
-  ctx.fillStyle='#245b35';ctx.fillRect(x,y,9,6);
-  ctx.fillStyle='#d65a79';ctx.fillRect(x+2,y+1,3,3);
- }
- // People
- for(const p of people){
-  if(!p.alive)continue;
-  let x=Math.round(p.x),y=Math.round(p.y);
-  const colors={'Exploring':'#f3d45b','Gathering':'#e89a57','Drinking':'#6bc5e8','Resting':'#80ce78','Socializing':'#c7a1f0','Experimenting':'#f3a6bd'};
-  ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x-4,y+6,10,3);
-  ctx.fillStyle=colors[p.action]||'#f3d45b';ctx.fillRect(x-3,y-5,8,9);
-  ctx.fillStyle='#e8c29a';ctx.fillRect(x-2,y-9,6,5);
-  ctx.fillStyle='#40352a';ctx.fillRect(x-2,y-10,6,2);
-  if(p.id===selected){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(x-6,y-12,14,22)}
- }
+
+function nearestWater(p) {
+  return {
+    x: waterX(p.y),
+    y: Math.max(15, Math.min(H - 15, p.y))
+  };
 }
-function moveToward(p,x,y){
- const dx=x-p.x,dy=y-p.y,d=Math.hypot(dx,dy)||1;
- p.x+=dx/d*2;p.y+=dy/d*2;
+
+function makePerson(i) {
+  return {
+    id: i + 1,
+    name: names[i % names.length] + (i >= names.length ? " " + (i + 1) : ""),
+    x: rand(70, 270),
+    y: rand(35, H - 35),
+    alive: true,
+    hunger: rand(5, 18),
+    thirst: rand(10, 24),
+    fatigue: rand(5, 20),
+    knowledge: rand(0, 2),
+    action: "Exploring",
+    goal: null,
+    color: Math.random() > 0.5 ? "#f0d28a" : "#e6a6a0",
+    foodCarried: 0
+  };
 }
-function nearestWater(p){return {x:waterX(p.y),y:p.y}}
-function decide(p){
- if(p.thirst>65){p.action='Drinking';return}
- if(p.hunger>65){p.action='Gathering';return}
- if(p.fatigue>75){p.action='Resting';return}
- if(Math.random()<.1){p.action='Socializing';return}
- if(Math.random()<.12){p.action='Experimenting';return}
- p.action=Math.random()<.55?'Exploring':'Gathering';
-}
-function act(p){
- if(!p.alive)return;
- p.hunger=Math.min(100,p.hunger+.65);
- p.thirst=Math.min(100,p.thirst+1.0);
- p.fatigue=Math.min(100,p.fatigue+.4);
- if(!p.goal||Math.random()<.12)decide(p);
- if(p.action==='Drinking'){
-  const w=nearestWater(p);
-  moveToward(p,w.x,w.y);
-  if(Math.abs(p.x-w.x)<30){p.thirst=Math.max(0,p.thirst-18);p.knowledge=Math.min(100,p.knowledge+.01)}
- }else if(p.action==='Gathering'){
-  if(p.hunger>35){
-   p.hunger=Math.max(0,p.hunger-3);
-   p.berries++;food++;
-   if(Math.random()<.03)log(p.name+' found wild berries.');
-  }else if(Math.random()<.2){
-   p.branches++;wood++;
-   if(Math.random()<.03)log(p.name+' collected fallen branches.');
+
+function newWorld() {
+  stopSimulation();
+
+  people = [];
+  for (let i = 0; i < 50; i++) {
+    people.push(makePerson(i));
   }
-  p.knowledge=Math.min(100,p.knowledge+.04);
- }else if(p.action==='Resting'){
-  p.fatigue=Math.max(0,p.fatigue-4);
- }else if(p.action==='Socializing'){
-  let other=choose(people.filter(q=>q.alive&&q.id!==p.id));
-  if(other){p.friends=Math.min(100,p.friends+.2);other.friends=Math.min(100,other.friends+.1)}
- }else if(p.action==='Experimenting'){
-  p.knowledge=Math.min(100,p.knowledge+.08);
-  if(Math.random()<.001)log(p.name+' discovered a new way to do something.');
- }else{
-  p.x+=(Math.random()-.5)*9;p.y+=(Math.random()-.5)*9;
- }
- p.x=Math.max(8,Math.min(712,p.x));p.y=Math.max(8,Math.min(422,p.y));
- if(p.hunger>=100||p.thirst>=100){
-  p.alive=false;log(p.name+' died from lack of '+(p.thirst>=100?'water':'food')+'.');
- }
+
+  tick = 0;
+  day = 1;
+  hour = 6;
+  food = 0;
+  tools = 0;
+  selectedId = null;
+  worldEvents = [];
+
+  document.getElementById("log").innerHTML = "";
+  log("A new world begins. Fifty people awaken in an untouched forest.");
+  log("There are no houses, tools, farms, leaders or laws.");
+  log("A river runs through the wilderness. Survival comes first.");
+
+  update();
+  draw();
 }
-function step(){
- if(!running)return;
- tick++;
- for(let i=0;i<speed;i++){
-  people.filter(p=>p.alive).forEach(act);
-  hour++;
-  if(hour>=24){hour=0;day++;log('A new day begins. The forest remains untamed.')}
- }
- update();draw();
+
+function toggleSimulation() {
+  if (running) {
+    stopSimulation();
+  } else {
+    running = true;
+    document.getElementById("startBtn").textContent = "Ⅱ Pause";
+    document.getElementById("status").textContent = "Simulation running";
+    timer = setInterval(step, 500);
+  }
 }
-function update(){
- $('day').textContent=day;
- $('pop').textContent=people.filter(p=>p.alive).length;
- $('time').textContent=String(hour).padStart(2,'0')+':00';
- $('food').textContent=food;$('wood').textContent=wood;$('tools').textContent=tools;
- if(selected>=0){
-  const p=people[selected];
-  $('personInfo').textContent=p.name+' · '+p.sex+' · '+(p.alive?'Alive':'Dead')+
-   ' · Action: '+p.action+' · Hunger '+Math.round(p.hunger)+
-   ' · Thirst '+Math.round(p.thirst)+' · Fatigue '+Math.round(p.fatigue)+
-   ' · Knowledge '+Math.round(p.knowledge)+' · Friends '+Math.round(p.friends)+
-   '. Thought: '+p.thought;
- }
+
+function stopSimulation() {
+  running = false;
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+
+  const button = document.getElementById("startBtn");
+  if (button) button.textContent = "▶ Start";
+
+  const status = document.getElementById("status");
+  if (status) status.textContent = "Simulation stopped";
 }
-function showPeople(){
- const el=$('people');el.innerHTML='';
- people.forEach(p=>{
-  const b=document.createElement('button');
-  b.className='person';b.textContent=p.name+(p.alive?'':' †');
-  b.onclick=()=>{selected=p.id;update();draw()};
-  el.appendChild(b);
- });
+
+function changeSpeed() {
+  if (speed === 1) speed = 3;
+  else if (speed === 3) speed = 8;
+  else speed = 1;
+
+  document.getElementById("speedLabel").textContent = speed + "x";
 }
-$('start').onclick=()=>{
- if(running)return;
- running=true;$('start').disabled=true;$('pause').disabled=false;
- log('The 50 strangers begin their first day.');
- timer=setInterval(step,500);
-};
-$('pause').onclick=()=>{
- running=false;clearInterval(timer);
- $('start').disabled=false;$('pause').disabled=true;
- log('The simulation was paused.');
-};
-$('speed').onclick=()=>{
- speed=speed===1?3:speed===3?8:1;
- $('speed').textContent='Speed: '+speed+'×';
-};
-$('reset').onclick=()=>{
- running=false;clearInterval(timer);day=1;hour=6;food=0;wood=0;tools=0;tick=0;selected=-1;
- $('log').innerHTML='';makePeople();showPeople();draw();update();
- log('A new untouched world. No homes, tools, or leaders.');
- $('start').disabled=false;$('pause').disabled=true;
-};
-canvas.onclick=e=>{
- const r=canvas.getBoundingClientRect();
- const x=(e.clientX-r.left)*canvas.width/r.width;
- const y=(e.clientY-r.top)*canvas.height/r.height;
- let best=null,dist=20;
- people.filter(p=>p.alive).forEach(p=>{
-  const d=Math.hypot(p.x-x,p.y-y);
-  if(d<dist){best=p;dist=d}
- });
- if(best){selected=best.id;update();draw()}
-};
-makePeople();showPeople();draw();update();
-log('World generated: untouched forest, wild berries, and a river.');
-})();
+
+function log(message) {
+  const box = document.getElementById("log");
+  if (!box) return;
+
+  const entry = document.createElement("div");
+  entry.className = "log-entry";
+  entry.textContent = "Day " + day + " · " + message;
+  box.prepend(entry);
+
+  while (box.children.length > 70) {
+    box.removeChild(box.lastChild);
+  }
+}
+
+function moveToward(p, x, y) {
+  const dx = x - p.x;
+  const dy = y - p.y;
+  const d = Math.hypot(dx, dy) || 1;
+
+  // Increased movement speed so villagers can reach the river.
+  p.x += dx / d * 4.5;
+  p.y += dy / d * 4.5;
+
+  p.x = Math.max(8, Math.min(W - 8, p.x));
+  p.y = Math.max(8, Math.min(H - 8, p.y));
+}
+
+function decide(p) {
+  // Seek water before thirst becomes critical.
+  if (p.thirst > 35) {
+    p.action = "Drinking";
+    return;
+  }
+
+  if (p.hunger > 65) {
+    p.action = "Gathering";
+    return;
+  }
+
+  if (p.fatigue > 75) {
+    p.action = "Resting";
+    return;
+  }
+
+  const choice = Math.random();
+
+  if (choice < 0.38) {
+    p.action = "Exploring";
+  } else if (choice < 0.68) {
+    p.action = "Gathering";
+  } else if (choice < 0.84) {
+    p.action = "Observing";
+  } else {
+    p.action = "Resting";
+  }
+}
+
+function act(p) {
+  if (!p.alive) return;
+
+  // Slower needs progression gives villagers time to survive.
+  p.hunger = Math.min(100, p.hunger + 0.11);
+  p.thirst = Math.min(100, p.thirst + 0.18);
+  p.fatigue = Math.min(100, p.fatigue + 0.07);
+
+  if (!p.goal || Math.random() < 0.12) {
+    decide(p);
+  }
+
+  if (p.action === "Drinking") {
+    const w = nearestWater(p);
+    moveToward(p, w.x, w.y);
+
+    if (Math.abs(p.x - w.x) < 30) {
+      // Drink in smaller amounts to avoid instant need changes.
+      p.thirst = Math.max(0, p.thirst - 5);
+      p.knowledge = Math.min(100, p.knowledge + 0.01);
+    }
+  }
+
+  else if (p.action === "Gathering") {
+    p.knowledge = Math.min(100, p.knowledge + 0.015);
+
+    if (Math.random() < 0.025) {
+      p.foodCarried++;
+      food++;
+      p.hunger = Math.max(0, p.hunger - 3);
+    }
+
+    if (p.hunger > 45 && p.foodCarried > 0) {
+      p.foodCarried--;
+      p.hunger = Math.max(0, p.hunger - 15);
+    }
+
+    if (Math.random() < 0.3) {
+      moveToward(p, rand(30, 330), rand(20, H - 20));
+    }
+  }
+
+  else if (p.action === "Resting") {
+    p.fatigue = Math.max(0, p.fatigue - 0.8);
+    p.knowledge = Math.min(100, p.knowledge + 0.002);
+  }
+
+  else if (p.action === "Exploring") {
+    p.knowledge = Math.min(100, p.knowledge + 0.01);
+
+    if (Math.random() < 0.08) {
+      p.goal = {
+        x: rand(25, 330),
+        y: rand(20, H - 20)
+      };
+    }
+
+    if (p.goal) {
+      moveToward(p, p.goal.x, p.goal.y);
+
+      if (Math.hypot(p.goal.x - p.x, p.goal.y - p.y) < 10) {
+        p.goal = null;
+      }
+    } else {
+      moveToward(p, rand(25, 330), rand(20, H - 20));
+    }
+  }
+
+  else if (p.action === "Observing") {
+    p.knowledge = Math.min(100, p.knowledge + 0.025);
+
+    if (Math.random() < 0.15) {
+      p.action = "Exploring";
+    }
+  }
+
+  if (p.hunger >= 100 || p.thirst >= 100) {
+    p.alive = false;
+    p.action = "Dead";
+    log(p.name + " has died from " +
+      (p.thirst >= 100 ? "dehydration." : "starvation."));
+  }
+}
+
+function step() {
+  if (!running) return;
+
+  for (let i = 0; i < speed; i++) {
+    tick++;
+
+    people.filter(p => p.alive).forEach(act);
+
+    // One in-game hour passes every six simulation steps.
+    if (tick % 6 === 0) {
+      hour++;
+
+      if (hour >= 24) {
+        hour = 0;
+        day++;
+        log("A new day begins. The forest remains untamed.");
+      }
+    }
+  }
+
+  update();
+  draw();
+
+  if (people.every(p => !p.alive)) {
+    stopSimulation();
+    log("Everyone has perished. The wilderness is empty.");
+  }
+}
+
+function update() {
+  const living = people.filter(p => p.alive);
+
+  document.getElementById("population").textContent = living.length;
+  document.getElementById("day").textContent = day;
+  document.getElementById("time").textContent =
+    String(hour).padStart(2, "0") + ":00";
+  document.getElementById("food").textContent = food;
+  document.getElementById("tools").textContent = tools;
+
+  const averageKnowledge = living.length
+    ? living.reduce((sum, p) => sum + p.knowledge, 0) / living.length
+    : 0;
+
+  document.getElementById("knowledge").textContent =
+    Math.floor(averageKnowledge) + "%";
+
+  renderVillagers();
+  renderSelected();
+}
+
+function renderVillagers() {
+  const list = document.getElementById("villagers");
+  list.innerHTML = "";
+
+  people.forEach(p => {
+    const item = document.createElement("div");
+    item.className = "villager";
+    item.style.opacity = p.alive ? "1" : "0.45";
+
+    item.textContent = (p.alive ? "● " : "✕ ") +
+      p.name + " — " + p.action +
+      (p.alive ? " · Thirst " + Math.floor(p.thirst) + "%" : "");
+
+    item.onclick = () => {
+      selectedId = p.id;
+      renderSelected();
+      draw();
+    };
+
+    list.appendChild(item);
+  });
+}
+
+function renderSelected() {
+  const p = people.find(person => person.id === selectedId);
+  const info = document.getElementById("selectedInfo");
+
+  if (!p) {
+    info.textContent = "Select a villager from the population list.";
+    return;
+  }
+
+  info.innerHTML = "";
+
+  const lines = [
+    ["Name", p.name],
+    ["Status", p.alive ? "Alive" : "Dead"],
+    ["Current action", p.action],
+    ["Hunger", Math.floor(p.hunger) + "%"],
+    ["Thirst", Math.floor(p.thirst) + "%"],
+    ["Fatigue", Math.floor(p.fatigue) + "%"],
+    ["Knowledge", Math.floor(p.knowledge) + "%"],
+    ["Food carried", p.foodCarried]
+  ];
+
+  lines.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+    row.appendChild(strong);
+    row.appendChild(document.createTextNode(value));
+    info.appendChild(row);
+  });
+}
+
+function drawTree(x, y, size) {
+  ctx.fillStyle = "#24472c";
+  ctx.fillRect(x - 2, y + size - 3, 4, size + 5);
+
+  ctx.fillStyle = "#1f492b";
+  ctx.fillRect(x - size, y - size, size * 2, size * 2);
+
+  ctx.fillStyle = "#386d3b";
+  ctx.fillRect(x - size / 2, y - size / 2, size, size);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Forest floor.
+  ctx.fillStyle = "#315b35";
+  ctx.fillRect(0, 0, W, H);
+
+  // Pixel-like patches of grass.
+  for (let i = 0; i < 130; i++) {
+    const x = (i * 73 + 31) % W;
+    const y = (i * 47 + 19) % H;
+
+    ctx.fillStyle = i % 2 ? "#39683b" : "#2c5230";
+    ctx.fillRect(x, y, 4, 3);
+  }
+
+  // River.
+  ctx.beginPath();
+  for (let y = 0; y <= H; y += 4) {
+    const x = waterX(y);
+    if (y === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+
+  for (let y = H; y >= 0; y -= 4) {
+    const x = waterX(y) + 24;
+    ctx.lineTo(x, y);
+  }
+
+  ctx.closePath();
+  ctx.fillStyle = "#367ca1";
+  ctx.fill();
+
+  // River highlights.
+  ctx.fillStyle = "#70b5d0";
+  for (let i = 0; i < 18; i++) {
+    const y = (i * 29 + tick * 2) % H;
+    ctx.fillRect(waterX(y) + 5, y, 9, 2);
+  }
+
+  // Trees around the forest.
+  for (let i = 0; i < 45; i++) {
+    const x = (i * 137 + 23) % W;
+    const y = (i * 83 + 11) % H;
+
+    if (Math.abs(x - waterX(y)) > 45) {
+      drawTree(x, y, 5 + (i % 4));
+    }
+  }
+
+  // River label.
+  ctx.fillStyle = "#e1f4ff";
+  ctx.font = "11px monospace";
+  ctx.fillText("RIVER", waterX(40) + 29, 40);
+
+  // Villagers.
+  people.forEach(p => {
+    if (!p.alive) return;
+
+    const isSelected = p.id === selectedId;
+
+    if (isSelected) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(p.x - 7, p.y - 8, 14, 16);
+    }
+
+    // Head and body.
+    ctx.fillStyle = "#e9bd91";
+    ctx.fillRect(p.x - 3, p.y - 7, 6, 6);
+
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 4, p.y, 8, 8);
+
+    ctx.fillStyle = "#352b25";
+    ctx.fillRect(p.x - 4, p.y + 8, 3, 4);
+    ctx.fillRect(p.x + 1, p.y + 8, 3, 4);
+
+    if (isSelected) {
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "10px monospace";
+      ctx.fillText(p.name, p.x + 8, p.y - 3);
+    }
+  });
+}
+
+newWorld();
 </script>
 </body>
 </html>
