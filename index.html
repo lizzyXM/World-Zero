@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Zero</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#17251d;color:#edf3df;font:14px system-ui,sans-serif}
+header{padding:16px;background:#23392b;border-bottom:2px solid #58744b}
+h1{margin:0;font-size:26px;color:#c8e6a0}
+header p{margin:5px 0 0;color:#c4d2bd}
+main{max-width:1000px;margin:auto;padding:12px}
+.panel{background:#25372b;border:1px solid #52674d;border-radius:10px;padding:12px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#17271e;padding:10px;border-radius:7px}
+.stat strong{display:block;font-size:19px;color:#d2e9a8}
+button{background:#c5df99;color:#1d2d20;border:0;border-radius:7px;padding:11px 14px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+canvas{display:block;width:100%;height:auto;border-radius:8px;border:2px solid #6a8055;image-rendering:pixelated;background:#54864b}
+small,.muted{color:#bdcdb8}
+#log{height:145px;overflow:auto;line-height:1.6}
+.logline{border-bottom:1px solid #405441;padding:3px 0}
+.person{display:inline-block;background:#17271e;border-radius:5px;padding:5px;margin:3px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>🌿 WORLD ZERO</h1>
+<p>A civilization begins with nothing.</p>
+</header>
+<main>
+<section class="panel">
+<b>WORLD STATUS</b>
+<div class="stats">
+<div class="stat">Day<strong id="day">1</strong></div>
+<div class="stat">Population<strong id="pop">50</strong></div>
+<div class="stat">Time<strong id="time">06:00</strong></div>
+<div class="stat">Food collected<strong id="food">0</strong></div>
+<div class="stat">Wood collected<strong id="wood">0</strong></div>
+<div class="stat">Tools<strong id="tools">0</strong></div>
+</div>
+<div class="controls">
+<button id="start">▶ Start simulation</button>
+<button id="pause" disabled>Ⅱ Pause</button>
+<button id="speed">Speed: 1×</button>
+<button id="reset">↻ New world</button>
+</div>
+<small>No houses. No tools. No laws. No assigned jobs. The people must discover how to survive.</small>
+</section>
+<section class="panel">
+<b>THE WILDERNESS</b>
+<p class="muted">Green forest, wild berries and a river. Each colored figure is one person.</p>
+<canvas id="world" width="720" height="430"></canvas>
+<p class="muted">🟡 Exploring · 🟠 Gathering · 🔵 Drinking · 🟢 Resting · 🟣 Socializing</p>
+</section>
+<section class="panel">
+<b>WORLD CHRONICLE</b>
+<div id="log" aria-live="polite"></div>
+</section>
+<section class="panel">
+<b>PEOPLE</b>
+<p class="muted">Select a villager to inspect their needs and current behavior.</p>
+<div id="people"></div>
+<div id="personInfo" class="muted">No person selected.</div>
+</section>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById('world');
+const ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let people=[],running=false,day=1,hour=6,food=0,wood=0,tools=0,speed=1,tick=0,selected=-1,timer=null;
+const names=['Ada','Bela','Cora','Dara','Eva','Fia','Gala','Hana','Iris','Jana','Kira','Lia','Mara','Nina','Ona','Pia','Rosa','Sara','Tina','Vera','Willa','Yara','Zara','Mina','Luma','Ari','Bento','Caio','Davi','Enzo','Felix','Gael','Hugo','Ivo','Joao','Kai','Leo','Milo','Nico','Otto','Ravi','Theo','Uri','Vitor','Will','Xavi','Yuri','Zeca','Noah','Alan'];
+const rand=n=>Math.floor(Math.random()*n);
+const choose=a=>a[rand(a.length)];
+function makePeople(){
+ people=[];
+ for(let i=0;i<50;i++){
+  people.push({id:i,name:names[i],sex:i<25?'Woman':'Man',
+   x:45+rand(620),y:35+rand(355),hunger:10+rand(15),
+   thirst:10+rand(15),fatigue:rand(15),age:18+rand(30),
+   berries:0,branches:0,knowledge:0,friends:0,
+   action:'Exploring',goal:null,thought:'I must learn how to live here.',
+   alive:true});
+ }
+}
+function log(s){
+ const el=document.createElement('div');
+ el.className='logline';el.textContent='Day '+day+' · '+String(hour).padStart(2,'0')+':00 — '+s;
+ $('log').prepend(el);
+ while($('log').children.length>60)$('log').lastChild.remove();
+}
+function waterX(y){return 365+Math.sin(y/65)*65}
+function draw(){
+ ctx.clearRect(0,0,720,430);
+ ctx.fillStyle='#57864b';ctx.fillRect(0,0,720,430);
+ // Pixel-art grass
+ for(let y=0;y<430;y+=16)for(let x=0;x<720;x+=16){
+  if((x*7+y*3)%5===0){ctx.fillStyle='#639453';ctx.fillRect(x,y,7,5)}
+  if((x+y)%7===0){ctx.fillStyle='#487b42';ctx.fillRect(x+8,y+9,4,4)}
+ }
+ // River and banks
+ ctx.fillStyle='#b5b879';
+ ctx.beginPath();
+ for(let y=0;y<=430;y+=5){let x=waterX(y);if(y===0)ctx.moveTo(x-25,y);else ctx.lineTo(x-25,y)}
+ for(let y=430;y>=0;y-=5)ctx.lineTo(waterX(y)+25,y);
+ ctx.closePath();ctx.fill();
+ ctx.fillStyle='#398cbd';
+ ctx.beginPath();
+ for(let y=0;y<=430;y+=5){let x=waterX(y);if(y===0)ctx.moveTo(x-20,y);else ctx.lineTo(x-20,y)}
+ for(let y=430;y>=0;y-=5)ctx.lineTo(waterX(y)+20,y);
+ ctx.closePath();ctx.fill();
+ for(let i=0;i<18;i++){
+  let y=(i*29+tick*2)%430,x=waterX(y);
+  ctx.fillStyle='#86cce0';ctx.fillRect(x-10,y,12,2);
+ }
+ // Trees
+ for(let y=15;y<430;y+=35)for(let x=12;x<710;x+=37){
+  if(Math.abs(x-waterX(y))<40)continue;
+  if((x*3+y*7)%4===0)continue;
+  ctx.fillStyle='#67452c';ctx.fillRect(x+7,y+11,6,12);
+  ctx.fillStyle='#285d36';ctx.fillRect(x,y+3,20,13);
+  ctx.fillStyle='#347346';ctx.fillRect(x+3,y-3,14,13);
+  ctx.fillStyle='#4a8950';ctx.fillRect(x+5,y,5,4);
+ }
+ // Wild berries: natural food, not cultivated
+ for(let i=0;i<28;i++){
+  let x=25+(i*83)%660,y=20+(i*53)%390;
+  if(Math.abs(x-waterX(y))<45)continue;
+  ctx.fillStyle='#245b35';ctx.fillRect(x,y,9,6);
+  ctx.fillStyle='#d65a79';ctx.fillRect(x+2,y+1,3,3);
+ }
+ // People
+ for(const p of people){
+  if(!p.alive)continue;
+  let x=Math.round(p.x),y=Math.round(p.y);
+  const colors={'Exploring':'#f3d45b','Gathering':'#e89a57','Drinking':'#6bc5e8','Resting':'#80ce78','Socializing':'#c7a1f0','Experimenting':'#f3a6bd'};
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x-4,y+6,10,3);
+  ctx.fillStyle=colors[p.action]||'#f3d45b';ctx.fillRect(x-3,y-5,8,9);
+  ctx.fillStyle='#e8c29a';ctx.fillRect(x-2,y-9,6,5);
+  ctx.fillStyle='#40352a';ctx.fillRect(x-2,y-10,6,2);
+  if(p.id===selected){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(x-6,y-12,14,22)}
+ }
+}
+function moveToward(p,x,y){
+ const dx=x-p.x,dy=y-p.y,d=Math.hypot(dx,dy)||1;
+ p.x+=dx/d*2;p.y+=dy/d*2;
+}
+function nearestWater(p){return {x:waterX(p.y),y:p.y}}
+function decide(p){
+ if(p.thirst>65){p.action='Drinking';return}
+ if(p.hunger>65){p.action='Gathering';return}
+ if(p.fatigue>75){p.action='Resting';return}
+ if(Math.random()<.1){p.action='Socializing';return}
+ if(Math.random()<.12){p.action='Experimenting';return}
+ p.action=Math.random()<.55?'Exploring':'Gathering';
+}
+function act(p){
+ if(!p.alive)return;
+ p.hunger=Math.min(100,p.hunger+.65);
+ p.thirst=Math.min(100,p.thirst+1.0);
+ p.fatigue=Math.min(100,p.fatigue+.4);
+ if(!p.goal||Math.random()<.12)decide(p);
+ if(p.action==='Drinking'){
+  const w=nearestWater(p);
+  moveToward(p,w.x,w.y);
+  if(Math.abs(p.x-w.x)<30){p.thirst=Math.max(0,p.thirst-18);p.knowledge=Math.min(100,p.knowledge+.01)}
+ }else if(p.action==='Gathering'){
+  if(p.hunger>35){
+   p.hunger=Math.max(0,p.hunger-3);
+   p.berries++;food++;
+   if(Math.random()<.03)log(p.name+' found wild berries.');
+  }else if(Math.random()<.2){
+   p.branches++;wood++;
+   if(Math.random()<.03)log(p.name+' collected fallen branches.');
+  }
+  p.knowledge=Math.min(100,p.knowledge+.04);
+ }else if(p.action==='Resting'){
+  p.fatigue=Math.max(0,p.fatigue-4);
+ }else if(p.action==='Socializing'){
+  let other=choose(people.filter(q=>q.alive&&q.id!==p.id));
+  if(other){p.friends=Math.min(100,p.friends+.2);other.friends=Math.min(100,other.friends+.1)}
+ }else if(p.action==='Experimenting'){
+  p.knowledge=Math.min(100,p.knowledge+.08);
+  if(Math.random()<.001)log(p.name+' discovered a new way to do something.');
+ }else{
+  p.x+=(Math.random()-.5)*9;p.y+=(Math.random()-.5)*9;
+ }
+ p.x=Math.max(8,Math.min(712,p.x));p.y=Math.max(8,Math.min(422,p.y));
+ if(p.hunger>=100||p.thirst>=100){
+  p.alive=false;log(p.name+' died from lack of '+(p.thirst>=100?'water':'food')+'.');
+ }
+}
+function step(){
+ if(!running)return;
+ tick++;
+ for(let i=0;i<speed;i++){
+  people.filter(p=>p.alive).forEach(act);
+  hour++;
+  if(hour>=24){hour=0;day++;log('A new day begins. The forest remains untamed.')}
+ }
+ update();draw();
+}
+function update(){
+ $('day').textContent=day;
+ $('pop').textContent=people.filter(p=>p.alive).length;
+ $('time').textContent=String(hour).padStart(2,'0')+':00';
+ $('food').textContent=food;$('wood').textContent=wood;$('tools').textContent=tools;
+ if(selected>=0){
+  const p=people[selected];
+  $('personInfo').textContent=p.name+' · '+p.sex+' · '+(p.alive?'Alive':'Dead')+
+   ' · Action: '+p.action+' · Hunger '+Math.round(p.hunger)+
+   ' · Thirst '+Math.round(p.thirst)+' · Fatigue '+Math.round(p.fatigue)+
+   ' · Knowledge '+Math.round(p.knowledge)+' · Friends '+Math.round(p.friends)+
+   '. Thought: '+p.thought;
+ }
+}
+function showPeople(){
+ const el=$('people');el.innerHTML='';
+ people.forEach(p=>{
+  const b=document.createElement('button');
+  b.className='person';b.textContent=p.name+(p.alive?'':' †');
+  b.onclick=()=>{selected=p.id;update();draw()};
+  el.appendChild(b);
+ });
+}
+$('start').onclick=()=>{
+ if(running)return;
+ running=true;$('start').disabled=true;$('pause').disabled=false;
+ log('The 50 strangers begin their first day.');
+ timer=setInterval(step,500);
+};
+$('pause').onclick=()=>{
+ running=false;clearInterval(timer);
+ $('start').disabled=false;$('pause').disabled=true;
+ log('The simulation was paused.');
+};
+$('speed').onclick=()=>{
+ speed=speed===1?3:speed===3?8:1;
+ $('speed').textContent='Speed: '+speed+'×';
+};
+$('reset').onclick=()=>{
+ running=false;clearInterval(timer);day=1;hour=6;food=0;wood=0;tools=0;tick=0;selected=-1;
+ $('log').innerHTML='';makePeople();showPeople();draw();update();
+ log('A new untouched world. No homes, tools, or leaders.');
+ $('start').disabled=false;$('pause').disabled=true;
+};
+canvas.onclick=e=>{
+ const r=canvas.getBoundingClientRect();
+ const x=(e.clientX-r.left)*canvas.width/r.width;
+ const y=(e.clientY-r.top)*canvas.height/r.height;
+ let best=null,dist=20;
+ people.filter(p=>p.alive).forEach(p=>{
+  const d=Math.hypot(p.x-x,p.y-y);
+  if(d<dist){best=p;dist=d}
+ });
+ if(best){selected=best.id;update();draw()}
+};
+makePeople();showPeople();draw();update();
+log('World generated: untouched forest, wild berries, and a river.');
+})();
+</script>
+</body>
+</html>
