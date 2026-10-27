@@ -215,10 +215,42 @@ h2 { margin: 0 0 9px; font-size: 16px; }
 "use strict";
 
 /* ---------- SETTINGS AND WORLD ---------- */
+
 const canvas = document.getElementById("world");
 const ctx = canvas.getContext("2d");
 const VIEW_W = canvas.width;
 const VIEW_H = canvas.height;
+
+// Terrain sprite sheet
+const terrainSheet = new Image();
+let grassPattern = null;
+
+terrainSheet.onload = () => {
+  // The sheet uses an 8-column grid.
+  // Build a small repeating texture from its first tile.
+  const tile = document.createElement("canvas");
+  tile.width = 32;
+  tile.height = 32;
+
+  const tileCtx = tile.getContext("2d");
+  tileCtx.imageSmoothingEnabled = false;
+
+  tileCtx.drawImage(
+    terrainSheet,
+    8, 8, 128, 128,
+    0, 0, 32, 32
+  );
+
+  grassPattern = ctx.createPattern(tile, "repeat");
+  drawWorld();
+};
+
+terrainSheet.onerror = () => {
+  console.warn("Terrain sprites could not be loaded; using fallback ground.");
+};
+
+terrainSheet.src = "terrain_tilesheet.png";
+;
 const WORLD_W = 2400;
 const WORLD_H = 1700;
 
@@ -596,8 +628,14 @@ function drawTerrain(offsetX, offsetY, scale) {
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
 
+  
+if (grassPattern) {
+  ctx.fillStyle = grassPattern;
+} else {
   ctx.fillStyle = "#78985b";
-  ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+}
+ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
 
   // Natural ground texture
   ctx.fillStyle = "#719052";
