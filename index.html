@@ -232,14 +232,22 @@ terrainSheet.onload = () => {
   tile.width = 32;
   tile.height = 32;
 
-  const tileCtx = tile.getContext("2d");
-  tileCtx.imageSmoothingEnabled = false;
+  
+const tileCtx = tile.getContext("2d");
+tileCtx.imageSmoothingEnabled = false;
 
-  tileCtx.drawImage(
-    terrainSheet,
-    8, 8, 128, 128,
-    0, 0, 32, 32
-  );
+tileCtx.drawImage(
+  terrainSheet,
+  8, 8, 128, 128,
+  0, 0, 32, 32
+);
+
+// Adjust grass color without changing its pixel texture
+tileCtx.globalCompositeOperation = "color";
+tileCtx.fillStyle = "#829d60";
+tileCtx.fillRect(0, 0, 32, 32);
+tileCtx.globalCompositeOperation = "source-over";
+
 
   grassPattern = ctx.createPattern(tile, "repeat");
   drawWorld();
