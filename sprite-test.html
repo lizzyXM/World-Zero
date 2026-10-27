@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Zero — Sprite Test</title>
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #17251b;
+    color: #eef5e8;
+    font: 16px system-ui, sans-serif;
+  }
+  h1 { font-size: 24px; }
+  p { color: #b9cbb7; }
+  canvas {
+    display: block;
+    width: min(100%, 768px);
+    height: auto;
+    image-rendering: pixelated;
+    border: 2px solid #536b4c;
+    background: #101810;
+  }
+</style>
+</head>
+<body>
+<h1>World Zero — Terrain Sprite Test</h1>
+<p>Testing the original terrain image without editing it.</p>
+<canvas id="preview" width="768" height="576"></canvas>
+<p id="status">Loading image…</p>
+
+<script>
+const canvas = document.getElementById("preview");
+const ctx = canvas.getContext("2d");
+const img = new Image();
+
+img.onload = () => {
+  // Display the entire image without cropping or changing its contents.
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  document.getElementById("status").textContent =
+    `Loaded successfully: ${img.naturalWidth} × ${img.naturalHeight} pixels.`;
+};
+
+img.onerror = () => {
+  document.getElementById("status").textContent =
+    "Image not found. Check that terrain_tilesheet.png is in the repository root.";
+};
+
+img.src = "./terrain_tilesheet.png";
+</script>
+</body>
+</html>
